@@ -15,13 +15,14 @@ public class MainPageObject {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    public MainPageObject (WebDriver driver) {
+    public MainPageObject (WebDriver driver, String site) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        driver.get(site);
     }
 
     By getLocatorByString(String locatorWithType) {
-        String [] exploitedLocator = locatorWithType.split(Pattern.quote(":"), 2);
+        String [] exploitedLocator = locatorWithType.split(Pattern.quote("="), 2);
         String byType = exploitedLocator[0];
         String locator = exploitedLocator[1];
 
@@ -29,6 +30,8 @@ public class MainPageObject {
             return By.xpath(locator);
         }else if (byType.equals("class")) {
             return By.className(locator);
+        } else if (byType.equals("css")){
+            return By.cssSelector(locator);
         } else {
             throw new IllegalArgumentException("Can't get type of locator. Locator - " + locatorWithType);
         }
@@ -38,17 +41,21 @@ public class MainPageObject {
         By by = this.getLocatorByString(locator);
         wait.withMessage(errorMessage + "\n");
         return wait.until(
-                ExpectedConditions.presenceOfElementLocated(by)
-        );
-    }
-    public WebElement waitForElementPresents(String locator) {
-        By by = this.getLocatorByString(locator);
-        return wait.until(
+//                ExpectedConditions.visibilityOfElementLocated(by)
                 ExpectedConditions.presenceOfElementLocated(by)
         );
     }
 
-    public void swipeUpToElement(String locator, String errorMessage, int maxSwipes) throws InterruptedException {
+    public WebElement waitForElementPresents(String locator) {
+        By by = this.getLocatorByString(locator);
+        return wait.until(
+                ExpectedConditions.visibilityOfElementLocated(by)
+        );
+    }
+
+
+    public void swipeUpToElement(String locator, String errorMessage, int maxSwipes)
+            {
         int alreadySwiped = 0;
         WebElement element = this.waitForElementPresents(locator, errorMessage);
         while (!isElementLocatedOnTheScreen(locator)) {
@@ -58,13 +65,18 @@ public class MainPageObject {
             }
             swipeWebPageUp();
             ++alreadySwiped;
-            Thread.sleep(100);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
+        swipeWebPageUp();
     }
 
     public void swipeWebPageUp(){
         JavascriptExecutor JSExecutor = (JavascriptExecutor) driver;
-        JSExecutor.executeScript("window.scrollBy(0, 250)");
+        JSExecutor.executeScript("window.scrollBy(0, 500)");
     }
 
     public boolean isElementLocatedOnTheScreen(String locator) {
@@ -75,6 +87,12 @@ public class MainPageObject {
 
         int screenSizeByY = driver.manage().window().getSize().getHeight();
         return elementLocationByY < screenSizeByY;
+    }
+
+    public WebElement clickOnElement(String locator, String errorMessage){
+        WebElement element = waitForElementPresents(locator, errorMessage);
+        element.click();
+        return element;
     }
 
 }

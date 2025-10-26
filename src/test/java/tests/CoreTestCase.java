@@ -24,6 +24,9 @@ public class CoreTestCase {
     public void startBrowser() {
         ChromeOptions options = new ChromeOptions();
 
+//        options.addArguments("--start-maximized");
+        options.addArguments("--window-size=1200,1200");
+
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
